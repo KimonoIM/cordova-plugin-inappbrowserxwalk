@@ -132,6 +132,8 @@ public class InAppBrowserXwalk extends CordovaPlugin {
                 int closeButtonSize = 25;
                 String closeButtonColor = "#000000";
                 boolean openHidden = false;
+                boolean clearcache = false;
+                boolean clearsessioncache = false;
 
                 if(data != null && data.length() > 1) {
                     try {
@@ -155,10 +157,22 @@ public class InAppBrowserXwalk extends CordovaPlugin {
                             if(!options.isNull("openHidden")) {
                                 openHidden = options.getBoolean("openHidden");
                             }
+                            if(!options.isNull("clearcache")) {
+                                clearcache = options.getBoolean("clearcache");
+                            }
+                            if(!options.isNull("clearsessioncache")) {
+                                clearcache = options.getBoolean("clearsessioncache");
+                            }
                         }
                     catch (JSONException ex) {
 
                     }
+                }
+
+                if(clearcache) {
+                    mCookieManager.removeAllCookie();
+                } else if (clearsessioncache) {
+                    mCookieManager.removeSessionCookie();
                 }
 
                 LinearLayout main = new LinearLayout(cordova.getActivity());
