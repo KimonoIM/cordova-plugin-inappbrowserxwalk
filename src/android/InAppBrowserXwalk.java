@@ -27,10 +27,13 @@ import android.widget.Toast;
 
 import android.webkit.WebResourceResponse;
 
+import android.util.Log;
+
 public class InAppBrowserXwalk extends CordovaPlugin {
 
     private BrowserDialog dialog;
     private XWalkView xWalkWebView;
+    private XWalkCookieManager mCookieManager;
     private CallbackContext callbackContext;
 
     @Override
@@ -117,15 +120,6 @@ public class InAppBrowserXwalk extends CordovaPlugin {
         this.cordova.getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                dialog = new BrowserDialog(cordova.getActivity(), android.R.style.Theme_NoTitleBar);
-                xWalkWebView = new XWalkView(cordova.getActivity(), cordova.getActivity());
-                XWalkCookieManager mCookieManager = new XWalkCookieManager();
-                mCookieManager.setAcceptCookie(true);
-                mCookieManager.setAcceptFileSchemeCookies(true);
-                xWalkWebView.setUIClient(new MyClientUI(xWalkWebView));
-                xWalkWebView.setResourceClient(new MyResourceClient(xWalkWebView));
-                xWalkWebView.load(url, "");
-
                 String toolbarColor = "#FFFFFF";
                 int toolbarHeight = 80;
                 String closeButtonText = "< Close";
@@ -134,6 +128,7 @@ public class InAppBrowserXwalk extends CordovaPlugin {
                 boolean openHidden = false;
                 boolean clearcache = false;
                 boolean clearsessioncache = false;
+                String cookie = "";
 
                 if(data != null && data.length() > 1) {
                     try {
@@ -163,17 +158,34 @@ public class InAppBrowserXwalk extends CordovaPlugin {
                             if(!options.isNull("clearsessioncache")) {
                                 clearcache = options.getBoolean("clearsessioncache");
                             }
+                            if(!options.isNull("cookie")) {
+                                cookie = options.getString("cookie");
+                                Log.d("lalala", "Got cookie: " + cookie);
+                            } else {
+                                Log.d("lalala", "No cookie: " + cookie);
+                            }
                         }
-                    catch (JSONException ex) {
-
-                    }
+                    catch (JSONException ex) {}
                 }
+
+                dialog = new BrowserDialog(cordova.getActivity(), android.R.style.Theme_NoTitleBar);
+                xWalkWebView = new XWalkView(cordova.getActivity(), cordova.getActivity());
+
+                mCookieManager = new XWalkCookieManager();
+                mCookieManager.setAcceptCookie(true);
+                mCookieManager.setAcceptFileSchemeCookies(true);
 
                 if(clearcache) {
                     mCookieManager.removeAllCookie();
                 } else if (clearsessioncache) {
                     mCookieManager.removeSessionCookie();
                 }
+
+                mCookieManager.setCookie(url, cookie);
+
+                xWalkWebView.setUIClient(new MyClientUI(xWalkWebView));
+                xWalkWebView.setResourceClient(new MyResourceClient(xWalkWebView));
+                xWalkWebView.load(url, "");
 
                 LinearLayout main = new LinearLayout(cordova.getActivity());
                 main.setOrientation(LinearLayout.VERTICAL);
