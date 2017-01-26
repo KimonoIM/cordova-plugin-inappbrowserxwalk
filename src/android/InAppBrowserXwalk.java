@@ -28,6 +28,8 @@ import android.widget.Toast;
 import android.webkit.WebResourceResponse;
 
 import android.util.Log;
+import java.util.ArrayList;
+import java.util.List;
 
 public class InAppBrowserXwalk extends CordovaPlugin {
 
@@ -115,6 +117,17 @@ public class InAppBrowserXwalk extends CordovaPlugin {
            }
    }
 
+   public List<String> toListOfCookieValue(JSONArray array) {
+    if(array==null)
+        return null;
+
+    List<String> arr=new ArrayList<String>();
+    for(int i=0; i<array.length(); i++) {
+        arr.add(array.optString(i));
+    }
+    return arr;
+}
+
     private void openBrowser(final JSONArray data) throws JSONException {
         final String url = data.getString(0);
         this.cordova.getActivity().runOnUiThread(new Runnable() {
@@ -129,6 +142,7 @@ public class InAppBrowserXwalk extends CordovaPlugin {
                 boolean clearcache = false;
                 boolean clearsessioncache = false;
                 String cookie = "";
+                List<String> urls = new ArrayList<String>();
 
                 if(data != null && data.length() > 1) {
                     try {
@@ -164,6 +178,10 @@ public class InAppBrowserXwalk extends CordovaPlugin {
                             } else {
                                 Log.d("lalala", "No cookie: " + cookie);
                             }
+                            if (!options.isNull("url")) {
+                                JSONArray urlsArray = options.getJSONArray("url");
+                                urls = toListOfCookieValue(urlsArray);
+                            }
                         }
                     catch (JSONException ex) {}
                 }
@@ -181,7 +199,17 @@ public class InAppBrowserXwalk extends CordovaPlugin {
                     mCookieManager.removeSessionCookie();
                 }
 
-                mCookieManager.setCookie(url, cookie);
+                //mCookieManager.setCookie(url, cookie);
+
+                if (urls.size() > 0) {
+                    for(int i=0; i<urls.size(); i++) {
+                                String urlItem = urls.get(i);
+                                mCookieManager.setCookie(urlItem, cookie);
+                    }
+                } else {
+                    mCookieManager.setCookie(url, cookie);
+                }
+               
 
                 xWalkWebView.setUIClient(new MyClientUI(xWalkWebView));
                 xWalkWebView.setResourceClient(new MyResourceClient(xWalkWebView));
